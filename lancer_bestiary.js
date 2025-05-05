@@ -91,7 +91,7 @@ const MACRO_VERSION = "0.1"
 const DUPLICATE_HANDLING = { OVERWRITE: 1, SKIP: 2 } // These are defined in order to avoid using magic strings/numbers
 
 if (await Dialog.confirm({
-	title: `Lancer Bestiary ${MACRO_VERSION}`,
+	title: `${MACRO_NAME} ${MACRO_VERSION}`,
 	content: '<p>Are you sure you want to regenerate the bestiary? This <b>cannot be interrupted</b> and will take a while.</p>'
 }) != true)
 	return;
@@ -197,7 +197,7 @@ try {
 			currentSubActivity = `"${doc.name}, handling duplicate entry"`
 			if (duplicateBehavior === undefined) {
 				await Dialog.wait({
-					title: `Lancer Bestiary ${MACRO_VERSION}`,
+					title: `${MACRO_NAME} ${MACRO_VERSION}`,
 					content: "<p>Found a duplicate bestiary sheet with the same name (" + entryName + "). Should we skip over entries that already have sheets, or overwrite them? <b>Overwriting will delete the duplicate entries and replace them with new ones.</b></p>",
 					buttons: {
 						one: {
@@ -305,7 +305,7 @@ try {
 		else
 			totalNewClasses++;
 	}
-	currentActivity = "Wrapping up"
+	currentActivity = "Wrapping up";
 	ui.notifications.info(`Bestiary regeneration complete! Created ${totalNewClasses - totalRegeneratedClasses} class entries (${totalRegeneratedClasses} regenerated) and ${totalNewTemplates - totalRegeneratedTemplates} templates (${totalRegeneratedTemplates} regenerated).`);
 	updateProgressBar("Bestiary regenerated.", totalEntries, totalEntries);
 }
