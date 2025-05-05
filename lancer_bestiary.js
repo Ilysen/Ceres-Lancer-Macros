@@ -84,7 +84,7 @@ const SETTINGS = {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-// Used in 
+// Used in debug messaging 
 const MACRO_NAME = "Lancer Bestiary"
 const MACRO_VERSION = "0.1"
 
@@ -107,6 +107,7 @@ if (await Dialog.confirm({
 // Warning: Here be dragons. This is about half-refactored from the much messier form it took (originally this was a private macro for personal use).
 // I've done my best to make it palatable, but consider yourself warned!
 
+// General descriptions of what the macro is doing. Used in error logging
 let currentActivity = "Prepping basic data";
 let currentSubActivity = "Stuff";
 try {
@@ -304,7 +305,7 @@ try {
 		else
 			totalNewClasses++;
 	}
-
+	currentActivity = "Wrapping up"
 	ui.notifications.info(`Bestiary regeneration complete! Created ${totalNewClasses - totalRegeneratedClasses} class entries (${totalRegeneratedClasses} regenerated) and ${totalNewTemplates - totalRegeneratedTemplates} templates (${totalRegeneratedTemplates} regenerated).`);
 	updateProgressBar("Bestiary regenerated.", totalEntries, totalEntries);
 }
