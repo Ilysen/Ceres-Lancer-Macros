@@ -14,8 +14,8 @@ Creates a comprehensive bestiary of NPC classes and templates for all loaded LCP
 
 ![Bestiary demo](assets/img/Bestiary_0.PNG)
 
-(Screenshot taken with [Ownership Viewer](https://foundryvtt.com/packages/permission_viewer))
-![Bestiary sidebar view](assets/img/Bestiary_0.PNG)
+*(Screenshot taken with [Ownership Viewer](https://foundryvtt.com/packages/permission_viewer))*
+![Bestiary sidebar view](assets/img/Bestiary_1.PNG)
 
 ### Changelog
 
