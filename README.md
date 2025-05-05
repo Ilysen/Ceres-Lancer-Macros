@@ -6,6 +6,8 @@ Unless indicated otherwise, these have been tested on Foundry v12.331, Lancer v2
 
 This is _not_ a Foundry module! To add each macro to your game, you'll need to create new script macros in your world and copy-paste the code in. Detailed information is included at the top of each macro, including settings if applicable.
 
+These macros (and this repo) owe a lot to [LostCarcosa and Z3nner's macros](https://github.com/LostCarcosa/Carcosas-Lancer-Macros/). Check them out!
+
 A list includes:
 
 ## [Lancer Bestiary](lancer_bestiary.js)
@@ -15,6 +17,7 @@ Creates a comprehensive bestiary of NPC classes and templates for all loaded LCP
 ![Bestiary demo](assets/img/Bestiary_0.PNG)
 
 *(Screenshot taken with [Ownership Viewer](https://foundryvtt.com/packages/permission_viewer))*
+
 ![Bestiary sidebar view](assets/img/Bestiary_1.PNG)
 
 ### Changelog
