@@ -42,7 +42,7 @@ const SETTINGS = {
 
 	// Determines how entries will be named.
 	// 1: Class or template name, all uppercase (i.e. "GOLIATH")
-	// 2: Class or template name, treated as a proper noun (i.e. "Industrial Mech")
+	// 2: Class or template name, treated as a proper noun (i.e. "Spec Op")
 	// 3: As-is. Note that this can result in mismatched styles from different LCPs!
 	NAME_MODE: 2,
 
