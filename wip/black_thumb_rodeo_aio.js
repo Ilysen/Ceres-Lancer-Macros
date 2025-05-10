@@ -1,4 +1,10 @@
 /*
+	THIS IS INDEV -- USE IT AT YOUR OWN RISK
+	THIS IS INDEV -- USE IT AT YOUR OWN RISK
+	THIS IS INDEV -- USE IT AT YOUR OWN RISK
+	THIS IS INDEV -- USE IT AT YOUR OWN RISK
+	THIS IS INDEV -- USE IT AT YOUR OWN RISK
+
 	Black Thumb Rodeo All-In-One
 	Written by Ceres (@avawantstheoldusernamesback on Discord)
 
@@ -16,12 +22,12 @@ const DUPLICATE_TOKEN_HANDLING = { SMART: 1, PROMPT: 2, RECENTER: 3, DELETE: 4, 
 
 const SETTINGS = {
 	// This should match the name of the pilot exactly
-	PILOT_NAME: "LAKSHMI Prime",
-	
+	PILOT_NAME: undefined,
+
 	// Determines how the macro behaves when it detects that a pilot token has already been placed. Possible settings include SMART, PROMPT, RECENTER, DELETE, and NONE.
 	// SMART is the default; it will re-center the token if it's out of position, and delete it if it's already in the right spot. This should be fine for all general use cases.
 	EXISTING_TOKEN_HANDLING: DUPLICATE_TOKEN_HANDLING.SMART,
-	
+
 	// If true, the UI will log as it goes. If false, it'll log errors only.
 	INFO_NOTIFICATIONS: false
 }
@@ -38,6 +44,10 @@ const SETTINGS = {
 
 const pilotSheet = await game.actors.find(i => i.name === SETTINGS.PILOT_NAME);
 
+if (!SETTINGS.PILOT_NAME) {
+	ui.notifications.error("You haven't set the name of your pilot sheet. Look for the SETTINGS section near the top of the macro code.");
+	return;
+}
 if (!pilotSheet) {
 	ui.notifications.error("Didn't find pilot sheet. Make sure you got the name right!");
 	return;
@@ -100,32 +110,32 @@ if (placedToken) {
 
 // Apply new data to pilot token, then create
 const pilotTokenDoc = await pilotSheet.getTokenDocument(newTokenData);
-await canvas.scene.createEmbeddedDocuments("Token", [pilotTokenDoc.toObject()]); 
+await canvas.scene.createEmbeddedDocuments("Token", [pilotTokenDoc.toObject()]);
 
 // Find the newly-placed token 
 placedToken = canvas.tokens.placeables.find(i => i.name === SETTINGS.PILOT_NAME);
 
 let params =
-[{
-    filterType: "glow",
-    filterId: "blackThumbOutline",
-    outerStrength: 4,
-    innerStrength: 0,
-    color: 0x5099DD,
-    quality: 0.5,
-    padding: 10,
-    animated:
-    {
-        color: 
-        {
-           active: true, 
-           loopDuration: 3000, 
-           animType: "colorOscillation", 
-           val1:0x5099DD, 
-           val2:0x90EEFF
-        }
-    }
-}];
+	[{
+		filterType: "glow",
+		filterId: "blackThumbOutline",
+		outerStrength: 4,
+		innerStrength: 0,
+		color: 0x5099DD,
+		quality: 0.5,
+		padding: 10,
+		animated:
+		{
+			color:
+			{
+				active: true,
+				loopDuration: 3000,
+				animType: "colorOscillation",
+				val1: 0x5099DD,
+				val2: 0x90EEFF
+			}
+		}
+	}];
 
 // Finally, apply a visual effect
 await placedToken.TMFXaddUpdateFilters(params);
@@ -150,6 +160,8 @@ async function assembleTokenPlacementData(baseToken, offset) {
 	data["texture.scaleX"] = 0.55;
 	data["texture.scaleY"] = 0.55;
 	data["flags.barbrawl.resourceBars.bar1.attribute"] = "";
+	data["flags.barbrawl.resourceBars.bar2.attribute"] = "";
+	data["displayName"] = CONST.TOKEN_DISPLAY_MODES.HOVER;
 	data["displayBars"] = 0;
 	return data;
 }

@@ -22,4 +22,11 @@ Creates a comprehensive bestiary of NPC classes and templates for all loaded LCP
 
 ### Changelog
 
-* 0.1: Initial release.
+#### TBD
+* Indev version of a Black Thumb macro. It's here for version controlling, but you shouldn't mess with it!
+* **Lancer Bestiary 0.2**
+  * Strider features are now grouped together by kit. This isn't done in a very clean way, but it'll work for now.
+  * Weapon class (i.e. Superheavy Cannon, Main Rifle, etc) is now visible, and is shown in the same section as weapon tags.
+
+#### May 9, 2025
+* Initial release.

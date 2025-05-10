@@ -1,5 +1,5 @@
 /*
-	Lancer Bestiary 0.1
+	Lancer Bestiary 0.2
 	Written by Ceres (@avawantstheoldusernamesback on Discord)
 
 	Tested with a module-heavy setup on Foundry version 12.331, Lancer version 2.8.1.
@@ -19,6 +19,7 @@
 	* I drew extensively from the macro work of LostCarcosa and Z3nner (GitHub names) to make this, in some cases with ported code. I stand on your shoulders here; thank you.
 
 	Changelog:
+	* 0.2: Striders now group together their kit features. I'm not super happy with this, but it'll work for now. Also now displays NPC weapon types (i.e. Superheavy Cannon).
 	* 0.1: Initial public release. Works with Foundry v12.331, Lancer v2.8.1. Cleanliness refactoring, file formatting, lots of changes from internal version
 */
 
@@ -70,6 +71,7 @@ const SETTINGS = {
 	// Some content needs hardcoded exceptions in order to be properly sorted and named. These are as follows:
 	// 1. The RPV template (always capitalized, regardless of `NAME_MODE`)
 	// 2. Grunts from Kai's rebakes (items are considered rebakes if they have `"Grunt "` in their names; note the whitespace the end)
+	// 3. Striders have entirely bespoke code to group their features into kits.
 	// If either of those causes you trouble, set this to false and these special exceptions will be ignored
 	ENABLE_HACKY_WORKAROUNDS: true
 }
@@ -86,7 +88,7 @@ const SETTINGS = {
 
 // Used in debug messaging 
 const MACRO_NAME = "Lancer Bestiary"
-const MACRO_VERSION = "0.1"
+const MACRO_VERSION = "0.2"
 
 const DUPLICATE_HANDLING = { OVERWRITE: 1, SKIP: 2 } // These are defined in order to avoid using magic strings/numbers
 
@@ -107,9 +109,23 @@ if (await Dialog.confirm({
 // Warning: Here be dragons. This is about half-refactored from the much messier form it took (originally this was a private macro for personal use).
 // I've done my best to make it palatable, but consider yourself warned!
 
+//#region evil terrible strider kits
+// I hate this. I HATE this.
+// The Wallflower LCP doesn't individually flag any of these features as associated with their kits. The PDF is the only source.
+// So as a result, if we want to be accurate to the rules, we need to *manually define the feature names as associated with their kits*!!!
+// It SUCKS but there's no better way to do it. I'm sorry. Nobody should let me near a keyboard.
+const striderKitFeatures = {
+	"MARKSMAN": ["RANGER LONG RIFLE", "MARKSMAN KIT SWAP BONUS", "DUCK"],
+	"SKIRMISHER": ["EXPLOSIVE RIFLE", "SKIRMISHER KIT SWAP BONUS", "REPOSITION"],
+	"SIEGE": ["SHOULDER MORTAR", "SIEGE KIT SWAP BONUS", "BLAST SHIELD", "ENTRENCHED"],
+	"SAPPER": ["MAG SHOTGUN", "SAPPER KIT SWAP BONUS", "SMOKE GRENADE", "JAMMING PYLON"],
+}
+//#endregion
+
 // General descriptions of what the macro is doing. Used in error logging
 let currentActivity = "Prepping basic data";
 let currentSubActivity = "Stuff";
+
 try {
 	ui.notifications.info("Now regenerating the bestiary from class and template compendiums. This will take some time.");
 
@@ -145,6 +161,7 @@ try {
 		currentSubActivity = `"${doc.name}, getting basic data"`
 		let entryName = processText(doc.name, SETTINGS.NAME_MODE);
 		let isTemplate = doc.type === "npc_template";
+		let isStrider = !isTemplate && doc.name === "STRIDER" && SETTINGS.ENABLE_HACKY_WORKAROUNDS; // This adjusts a lot of behavior down the line, so we need to set it early
 
 		currentSubActivity = `"${doc.name}, checking for rebake"`
 		// So, Kai's rebake includes bespoke grunt types.
@@ -229,11 +246,23 @@ try {
 
 		currentSubActivity = `"${doc.name}, building base features and weapons"`
 		let baseFeatures = [], baseWeapons = [];
+		let baseKits = [];
+		let optionalKits = [];
 		for (const x of doc.system.base_features) {
 			let feature = await game.lancer.fromLid(x);
 			if (!feature) {
 				consoleLog("Encountered an issue with feature by the name of " + x + ". Fix me manually?");
 				continue;
+			}
+			if (isStrider) {
+				// If the feature is in a strider kit, don't clump it with the other features -- it'll have its own handling later
+				let kitType = checkKitFeature(feature);
+				if (kitType) {
+					if (!baseKits[kitType])
+						baseKits[kitType] = [];
+					baseKits[kitType].push(feature);
+					continue;
+				}
 			}
 			if (feature.system.type === "Weapon")
 				baseWeapons.push(feature.system);
@@ -248,6 +277,15 @@ try {
 			if (!feature) {
 				consoleLog("Encountered an issue with feature by the name of " + x + ". Fix me manually?");
 				continue;
+			}
+			if (isStrider) {
+				let kitType = checkKitFeature(feature);
+				if (kitType) {
+					if (!optionalKits[kitType])
+						optionalKits[kitType] = [];
+					optionalKits[kitType].push(feature);
+					continue;
+				}
 			}
 			if (feature.system.type === "Weapon")
 				optionalWeapons.push(feature.system);
@@ -267,7 +305,7 @@ try {
 		currentSubActivity = `"${doc.name}, assembling collected HTML"`
 		if (infoContent)
 			fullHtml += `<h3>Info</h3>` + infoContent;
-		if (SETTINGS.SEPARATE_WEAPONS_FROM_FEATURES) {
+		if (SETTINGS.SEPARATE_WEAPONS_FROM_FEATURES && !isStrider) {
 			if (baseWeaponsContent)
 				fullHtml += `<h3>Base Weapons</h3>` + baseWeaponsContent;
 			if (baseFeaturesContent)
@@ -278,10 +316,20 @@ try {
 				fullHtml += "<h3>Optional Weapons</h3>" + optionalWeaponsContent;
 			}
 		} else {
-			if (baseFeaturesContent)
+			if (baseFeaturesContent) {
 				fullHtml += `<h3>Base Features</h3>` + baseWeaponsContent + baseFeaturesContent
-			if (optionalFeaturesContent)
+				for (const [name, features] of Object.entries(baseKits)) {
+					// Here's where we group up the Strider stuff
+					fullHtml += await encapsulateStriderKit(features, name);
+				}
+			}
+			if (optionalFeaturesContent) {
 				fullHtml += `<h3>Optional Features</h3>` + optionalWeaponsContent + optionalFeaturesContent;
+				console.log(optionalKits);
+				for (const [name, features] of Object.entries(optionalKits)) {
+					fullHtml += await encapsulateStriderKit(features, name);
+				}
+			}
 		}
 		fullHtml += "</div>"
 
@@ -503,13 +551,15 @@ function constructWeaponHTML(weapon) {
 	if (weapon.on_hit) {
 		weaponDesc += `<tr><td colspan="6"><b>On Hit:</b> ${weapon.on_hit}</td></tr>`;
 	};
+	weaponDesc += `<tr><td colspan="6">${weapon.weapon_type}`
 	if (weapon.tags.length > 0) {
 		let tagsList = [];
 		weapon.tags.forEach((t, index) => {
 			tagsList.push(processTag(t));
 		});
-		weaponDesc += `<tr><td colspan="6"><i>Tags:</i> ${tagsList.join(", ")}</td></tr>`;
+		weaponDesc += `, <i>Tags:</i> ${tagsList.join(", ")}`;
 	};
+	weaponDesc += `</td></tr>`;
 	weaponEntry += weaponDesc;
 	return weaponEntry;
 }
@@ -541,8 +591,10 @@ function consoleLog(contents) {
 // LCPs often use conflicting standards for how they name their stuff; this lets us use a unified presentation for all of them.
 function processText(baseName, mode) {
 	// This whole macro should only ever be run once or twice, so we can get away with some inefficiencies here :bleh:
-	if (SETTINGS.ENABLE_HACKY_WORKAROUNDS && baseName === "RPV")
-		return baseName.toUpperCase();
+	if (SETTINGS.ENABLE_HACKY_WORKAROUNDS) {
+		if (baseName === "RPV")
+			return baseName.toUpperCase();
+	}
 	switch (mode) {
 		case 1: // Capitalize
 			return baseName.toUpperCase();
@@ -605,6 +657,38 @@ async function setupForRebakes() {
 			return;
 		}
 	}
+}
+
+// Checks if a given feature can be found within any Strider kit. If it can, returns the name of the parent kit.
+function checkKitFeature(feature) {
+	for (const [key, value] of Object.entries(striderKitFeatures)) {
+		if (value.includes(feature.name)) {
+			return key;
+		}
+	}
+}
+
+// Accepts features (an array of feature entries) and kitName (the readable name of a given kit), then assembles them into a unified HTML entry.
+// This individually calls the functions for weapon and feature HTML, then wraps them all in a nice border for legibility's sake and puts it all under a dropdown.
+// We can then add the dropdown to the regular base/optional feature lists within the bestiary page itself.
+async function encapsulateStriderKit(features, kitName) {
+	let swapBonusText = "";
+	let data = "";
+	for (const feature of features) {
+		if (feature.system.type === "Weapon") {
+			data += `<div style="padding-bottom: 0.5rem"><table>${constructWeaponHTML(feature.system)}</table></div>`
+		} else {
+			// *Extra* hacky. Instead of listing the swap bonuses as features, list them within the entry itself as the rulebook does
+			if (feature.name.includes("SWAP BONUS")) {
+				swapBonusText = feature.system.effect.replace("Swap bonus: ", "");
+				continue;
+			} else {
+				data += constructFeatureHTML(feature.system);
+			}
+		}
+	}
+	let newKitName = await processText(kitName + " KIT", SETTINGS.FEATURE_MODE);
+	return `<details><summary><i><b>${newKitName}</b></i></summary><div style="border: 2px solid; padding: 0.25rem 0.5rem 0.5rem 0.4rem"><p style="padding-bottom: 0.4rem"><b>Swap bonus:</b> ${swapBonusText}</p>${data}</div><br/></details>`;
 }
 
 //#endregion
