@@ -43,7 +43,7 @@ Limitations:
 
 Video demo with both optional integrations:
 
-![Video demo of the macro, showing use in conjunction with all module integrations](assets/video/BlackThumbAIO_1.mp4)
+https://github.com/user-attachments/assets/556b9d07-ddd6-4d74-aae2-e336b0aa4c21
 
 ### Changelog
 
