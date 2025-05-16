@@ -19,6 +19,9 @@
 	Notes:
 	* By default, this macro intuits your Foundry user's assigned character as the pilot to use. You can change the settings to search for a sheet by name, if needed.
 	* There's nothing saying you actually have to use a pilot for this macro. You'll need to change the settings, but you can use it for things like Latch Drone if you're a GM!
+
+	Changelog:
+	* 0.1: Initial public release. Works with Foundry v12.331, Lancer v2.8.1.
 */
 
 // You can safely ignore this
@@ -72,7 +75,7 @@ const SETTINGS = {
 
 // Used in debug messaging 
 const MACRO_NAME = "Black Thumb Rodeo AIO"
-const MACRO_VERSION = "INDEV"
+const MACRO_VERSION = "0.1"
 
 // Module IDs, for optional integrations
 const TOKEN_MAGIC_ID = "tokenmagic";

@@ -25,7 +25,29 @@ Creates a comprehensive bestiary of NPC classes and templates for all loaded LCP
   ![Bestiary strider demo](assets/img/Bestiary_2.png)
 </details>
 
+## [Black Thumb Rodeo All-In-One](black_thumb_rodeo_aio.js)
+
+All-purpose macro for Black Thumb Rodeo, with lots of configuration. Activating the macro will place a pilot token offset from the mech token and visually shrunk down to match, so that it can be targeted in accordance to the rules of the talent. Activating again will cause the token to be deleted, so you don't need to fuss -- you can use the same button multiple times!
+
+Although this is built for Black Thumb, there's no limitations in place regarding what you use it for. It can also be used for things like Latch Drone; you'll just need to set up the configuration for it.
+
+While the default settings should be more than sufficient for regular use, this macro is highly configurable. Read through its settings menu thoroughly if you want to make the most out of it.
+
+This macro contains additional functionality if either of the following modules are loaded. These integrations are **enabled by default,** but are **optional and can be disabled in the settings** if you'd like -- and **you can use the macro even if you don't have these modules!** It won't cause issues or anything like that.
+* [Token Attacher](https://github.com/KayelGee/token-attacher): The pilot token will be attached to the mech token and move alongside it. Without this module, the tokens will need be moved separately.
+* [Token Magic FX](https://github.com/Feu-Secret/Tokenmagic): The pilot token will have a glow applied to it in order to make it stand out.
+
+Limitations:
+* For this macro to work, users MUST have the required permissions to create and delete tokens. It won't function otherwise.
+* Template weapons don't consider the pilot token and mech token to share a space. GMs may need to manually add the pilot token as a target during area attacks.
+
+Video demo with both optional integrations:
+![Video demo of the macro, showing use in conjunction with all module integrations](assets/video/BlackThumbAIO_1.mp4)
+
 ### Changelog
+
+#### May 17, 2025
+* New macro: Black Thumb Rodeo All-In-One. See earlier in the readme for details!
 
 #### May 16, 2025
 * Indev version of a Black Thumb macro. It's here for version controlling, but you should only mess with it if you're okay with potential world-breaking bugs.
