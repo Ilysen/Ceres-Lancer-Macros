@@ -42,6 +42,7 @@ Limitations:
 * Template weapons don't consider the pilot token and mech token to share a space. GMs may need to manually add the pilot token as a target during area attacks.
 
 Video demo with both optional integrations:
+
 ![Video demo of the macro, showing use in conjunction with all module integrations](assets/video/BlackThumbAIO_1.mp4)
 
 ### Changelog
