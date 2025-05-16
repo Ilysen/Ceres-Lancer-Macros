@@ -1,10 +1,4 @@
 /*
-	THIS IS INDEV -- USE IT AT YOUR OWN RISK
-	THIS IS INDEV -- USE IT AT YOUR OWN RISK
-	THIS IS INDEV -- USE IT AT YOUR OWN RISK
-	THIS IS INDEV -- USE IT AT YOUR OWN RISK
-	THIS IS INDEV -- USE IT AT YOUR OWN RISK
-
 	Black Thumb Rodeo All-In-One
 	Written by Ceres (@avawantstheoldusernamesback on Discord)
 
@@ -18,7 +12,9 @@
 
 	Limitations:
 	* For this macro to work, users MUST have the required permissions to create and delete tokens. It won't function otherwise.
+	* Template weapons don't consider the pilot token and mech token to share a space. GMs may need to manually target the pilot token during area attacks.
 	* Nothing attaches the pilot token to the mech token -- you'll need to select both tokens and move them together, or use a module to attach one to the other.
+		* If the Token Attacher module is loaded, it will be automatically used to negate this issue! You can freely enable or disable this functionality in the settings.
 
 	Notes:
 	* By default, this macro intuits your Foundry user's assigned character as the pilot to use. You can change the settings to search for a sheet by name, if needed.
@@ -54,12 +50,14 @@ const SETTINGS = {
 	// Show visible notifications for macro logic. If disabled, these will be silently outputted to the console instead.
 	INFO_NOTIFICATIONS: false,
 
-	// Applies a glow effect to the pilot token to make it more visible. Requires Token Magic FX.
-	USE_GLOW: true,
-
 	// Determines the scale and offset of the attached token. Default values will keep the pilot token attached to the top-right of the host token.
 	TOKEN_SCALE: { X: 0.55, Y: 0.55 },
-	TOKEN_OFFSET: { X: canvas.scene.grid.size * 0.5, Y: canvas.scene.grid.size * 0.5 }
+	TOKEN_OFFSET: { X: canvas.scene.grid.size * 0.5, Y: canvas.scene.grid.size * 0.5 },
+
+	// Module integrations!
+	// These won't do anything if their requisite module isn't loaded -- they won't throw any errors, they'll just fail gracefully
+	INTEGRATION_TOKEN_MAGIC_FX: true, // Applies a glow effect to the pilot token to make it more visible.
+	INTEGRATION_TOKEN_ATTACHER: true // Attaches the pilot token to the mech token, allowing them to move together.
 }
 
 
@@ -75,6 +73,10 @@ const SETTINGS = {
 // Used in debug messaging 
 const MACRO_NAME = "Black Thumb Rodeo AIO"
 const MACRO_VERSION = "INDEV"
+
+// Module IDs, for optional integrations
+const TOKEN_MAGIC_ID = "tokenmagic";
+const TOKEN_ATTACHER_ID = "token-attacher";
 
 const intuitedPilot = SETTINGS.INTUIT_PILOT_SHEET && game.user.character?.type === "pilot" ? game.user.character : undefined;
 const pilotSheet = intuitedPilot ? intuitedPilot : await game.actors.find(i => i.name === SETTINGS.PILOT_NAME);
@@ -140,7 +142,7 @@ try {
 			notifInfo("Found existing token and deleted it.");
 		} else {
 			await placedToken.document.update(newTokenData);
-			if (SETTINGS.USE_GLOW)
+			if (SETTINGS.INTEGRATION_TOKEN_MAGIC_FX)
 				await applyGlow(placedToken);
 			notifInfo("Found existing token and re-centered it.");
 		}
@@ -153,8 +155,10 @@ try {
 
 	// Finalize the placed token
 	placedToken = canvas.tokens.placeables.find(i => i.name === pilotName);
-	if (SETTINGS.USE_GLOW)
+	if (SETTINGS.INTEGRATION_TOKEN_MAGIC_FX)
 		applyGlow(placedToken);
+	if (SETTINGS.INTEGRATION_TOKEN_ATTACHER)
+		attachToken(token, placedToken)
 	notifInfo("Placed Black Thumb Rodeo token.");
 } catch (error) {
 	ui.notifications.error(`Error caught during during Black Thumb Rodeo macro, check your console for details -- ${error}`);
@@ -185,34 +189,41 @@ async function assembleTokenPlacementData(baseToken) {
 	return data;
 }
 
-// Applies a visual glow to the token using Token Magic FX, to highlight that it's different from regular token placement
+// Applies a glow effect to the pilot token to make it stand out.
+// If Token Magic isn't loaded, this method will fail gracefully.
 async function applyGlow(placedToken) {
-	try {
-		let params =
-			[{
-				filterType: "glow",
-				filterId: "blackThumbOutline",
-				outerStrength: 4,
-				innerStrength: 0,
-				color: 0x5099DD,
-				quality: 0.5,
-				padding: 10,
-				animated:
+	if (!game.modules.get(TOKEN_MAGIC_ID)?.active)
+		return;
+	let params =
+		[{
+			filterType: "glow",
+			filterId: "blackThumbOutline",
+			outerStrength: 4,
+			innerStrength: 0,
+			color: 0x5099DD,
+			quality: 0.5,
+			padding: 10,
+			animated:
+			{
+				color:
 				{
-					color:
-					{
-						active: true,
-						loopDuration: 3000,
-						animType: "colorOscillation",
-						val1: 0x5099DD,
-						val2: 0x90EEFF
-					}
+					active: true,
+					loopDuration: 3000,
+					animType: "colorOscillation",
+					val1: 0x5099DD,
+					val2: 0x90EEFF
 				}
-			}];
-		await placedToken.TMFXaddUpdateFilters(params);
-	} catch (error) {
-		console.error("Caught an error applying Token Magic glow. If you aren't using Token Magic FX, you can safely ignore this message.");
-	}
+			}
+		}];
+	await placedToken.TMFXaddUpdateFilters(params);
+}
+
+// Attempts to use Token Attacher to glue the pilot token to the mech token.
+// If Token Attacher isn't loaded, this method will fail gracefully.
+async function attachToken(mechToken, pilotToken) {
+	if (!game.modules.get(TOKEN_ATTACHER_ID)?.active)
+		return;
+	await tokenAttacher.attachElementToToken(pilotToken, mechToken, true);
 }
 
 // Wrapper function for debug logging. Uses console.log(info) if notifications aren't enabled, and ui.notifications.info(info) if they are.
