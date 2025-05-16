@@ -24,7 +24,7 @@
 	* 0.1: Initial public release. Works with Foundry v12.331, Lancer v2.8.1.
 */
 
-// You can safely ignore this
+// Ignore this line! It has to be this high up in the macro so that it can be referenced by the settings down below.
 const DUPLICATE_TOKEN_HANDLING = { SMART: 1, PROMPT: 2, RECENTER: 3, DELETE: 4, NONE: 5 }
 
 
@@ -37,30 +37,37 @@ const DUPLICATE_TOKEN_HANDLING = { SMART: 1, PROMPT: 2, RECENTER: 3, DELETE: 4, 
 
 
 const SETTINGS = {
-	// The macro will attempt to detect your pilot sheet automatically.
-	// If you have issues with the default functionality, turn this to false and use PILOT_NAME below, instead.
+	// The macro will attempt to detect your pilot sheet automatically
+	// If you have issues with the default functionality, turn this to false and use PILOT_NAME below, instead
 	INTUIT_PILOT_SHEET: true,
 
 	// This should match the name of the pilot exactly -- replace whatever's inside the quotes with the name of the character you want to use.
-	// For most use, you shouldn't need to mess with this; if INTUIT_PILOT_SHEET is enabled, as it is by default, then the macro should find the right sheet automatically
-	// (Unless you're a GM using this for things like Latch Drone, in which case go nuts)
+	// For PC use, you shouldn't need to mess with this; if INTUIT_PILOT_SHEET is enabled, as it is by default, then the macro should find the right sheet automatically
+	// If you're a GM using this macro for something else though, go nuts
 	PILOT_NAME: "Paulie Placeholder",
 
-	// Determines how the macro behaves when it detects that a pilot token has already been placed. Possible settings include SMART, PROMPT, RECENTER, DELETE, and NONE.
+	// Determines how the macro behaves when it detects that a pilot token has already been placed. Possible settings include SMART, PROMPT, RECENTER, DELETE, and NONE
 	// SMART is the default; it will re-center the token if it's out of position, and delete it if it's already in the right spot. This should be fine for all general use cases.
 	EXISTING_TOKEN_HANDLING: DUPLICATE_TOKEN_HANDLING.SMART,
-
-	// Show visible notifications for macro logic. If disabled, these will be silently outputted to the console instead.
-	INFO_NOTIFICATIONS: false,
 
 	// Determines the scale and offset of the attached token. Default values will keep the pilot token attached to the top-right of the host token.
 	TOKEN_SCALE: { X: 0.55, Y: 0.55 },
 	TOKEN_OFFSET: { X: canvas.scene.grid.size * 0.5, Y: canvas.scene.grid.size * 0.5 },
 
+	// Adjusts how the pilot token's display name is shown. By default this is set to on hover, so as not to visually block the mech token itself
+	// Accepts any value from CONST.TOKEN_DISPLAY_MODES (as of writing: ALWAYS, CONTROL, HOVER, NONE, OWNER, OWNER_HOVER)
+	TOKEN_DISPLAY_NAME_MODE: CONST.TOKEN_DISPLAY_MODES.HOVER,
+
+	// Disables resource bars for the pilot token, since tracking HP isn't necessary during Rodeo
+	TOKEN_DISABLE_RESOURCE_BARS: true,
+
 	// Module integrations!
 	// These won't do anything if their requisite module isn't loaded -- they won't throw any errors, they'll just fail gracefully
 	INTEGRATION_TOKEN_MAGIC_FX: true, // Applies a glow effect to the pilot token to make it more visible.
-	INTEGRATION_TOKEN_ATTACHER: true // Attaches the pilot token to the mech token, allowing them to move together.
+	INTEGRATION_TOKEN_ATTACHER: true, // Attaches the pilot token to the mech token, allowing them to move together.
+
+	// Show visible notifications for macro logic. If disabled, these will be silently outputted to the console instead.
+	SHOW_NOTIFICATIONS: false
 }
 
 
@@ -109,7 +116,7 @@ try {
 		let newTask = SETTINGS.EXISTING_TOKEN_HANDLING;
 		switch (newTask) {
 			case DUPLICATE_TOKEN_HANDLING.NONE:
-				notifInfo("Found existing pilot token. Macro terminated.");
+				consoleLog("Found existing pilot token. Macro terminated.");
 				break;
 			case DUPLICATE_TOKEN_HANDLING.PROMPT:
 				await foundry.applications.api.DialogV2.wait({
@@ -132,22 +139,22 @@ try {
 				break;
 			case DUPLICATE_TOKEN_HANDLING.SMART:
 				if (Math.round(placedToken.transform.position.x) === Math.round(newTokenData.x) && Math.round(placedToken.transform.position.y) === Math.round(newTokenData.y)) {
-					notifInfo("Smart detection found existing token in position, and will attempt to delete it.");
+					consoleLog("Smart detection found existing token in position, and will attempt to delete it.");
 					newTask = DUPLICATE_TOKEN_HANDLING.DELETE;
 				} else {
-					notifInfo("Smart detection found existing token out of position, and will attempt to recenter it.");
+					consoleLog("Smart detection found existing token out of position, and will attempt to recenter it.");
 					newTask = DUPLICATE_TOKEN_HANDLING.RECENTER;
 				}
 				break;
 		}
 		if (newTask === DUPLICATE_TOKEN_HANDLING.DELETE) {
 			await placedToken.document.delete();
-			notifInfo("Found existing token and deleted it.");
+			consoleLog("Found existing token and deleted it.");
 		} else {
 			await placedToken.document.update(newTokenData);
 			if (SETTINGS.INTEGRATION_TOKEN_MAGIC_FX)
 				await applyGlow(placedToken);
-			notifInfo("Found existing token and re-centered it.");
+			consoleLog("Found existing token and re-centered it.");
 		}
 		return;
 	}
@@ -157,14 +164,14 @@ try {
 	await canvas.scene.createEmbeddedDocuments("Token", [pilotTokenDoc.toObject()]);
 
 	// Finalize the placed token
-	placedToken = canvas.tokens.placeables.find(i => i.name === pilotName);
+	placedToken = canvas.tokens.placeables.find(i => i.name === pilotName); // This is probably not the cleanest way to get this :bleh:
 	if (SETTINGS.INTEGRATION_TOKEN_MAGIC_FX)
 		applyGlow(placedToken);
 	if (SETTINGS.INTEGRATION_TOKEN_ATTACHER)
 		attachToken(token, placedToken)
-	notifInfo("Placed Black Thumb Rodeo token.");
+	consoleLog("Placed Black Thumb Rodeo token.");
 } catch (error) {
-	ui.notifications.error(`Error caught during during Black Thumb Rodeo macro, check your console for details -- ${error}`);
+	ui.notifications.error(`Error caught while running ${MACRO_NAME} ${MACRO_VERSION}, check your console for details -- ${error}`);
 }
 
 
@@ -185,18 +192,21 @@ async function assembleTokenPlacementData(baseToken) {
 	data.y -= SETTINGS.TOKEN_OFFSET.Y;
 	data["texture.scaleX"] = SETTINGS.TOKEN_SCALE.X;
 	data["texture.scaleY"] = SETTINGS.TOKEN_SCALE.Y;
-	data["flags.barbrawl.resourceBars.bar1.attribute"] = "";
-	data["flags.barbrawl.resourceBars.bar2.attribute"] = "";
-	data["displayName"] = CONST.TOKEN_DISPLAY_MODES.HOVER;
-	data["displayBars"] = 0;
+	data["displayName"] = SETTINGS.TOKEN_DISPLAY_NAME_MODE;
+	if (SETTINGS.TOKEN_DISABLE_RESOURCE_BARS) {
+		data["flags.barbrawl.resourceBars.bar1.attribute"] = "";
+		data["flags.barbrawl.resourceBars.bar2.attribute"] = "";
+		data["displayBars"] = 0;
+	}
 	return data;
 }
 
-// Applies a glow effect to the pilot token to make it stand out.
-// If Token Magic isn't loaded, this method will fail gracefully.
+// Attempts to use Token Magic FX to apply a glow effect to the pilot token to make it stand out.
+// If Token Magic FX isn't loaded, this method will fail gracefully.
 async function applyGlow(placedToken) {
 	if (!game.modules.get(TOKEN_MAGIC_ID)?.active)
 		return;
+	// If you want to change the glow effect, feel free to change the params down below to whatever you want them to be
 	let params =
 		[{
 			filterType: "glow",
@@ -230,8 +240,8 @@ async function attachToken(mechToken, pilotToken) {
 }
 
 // Wrapper function for debug logging. Uses console.log(info) if notifications aren't enabled, and ui.notifications.info(info) if they are.
-function notifInfo(info) {
-	if (SETTINGS.INFO_NOTIFICATIONS)
+function consoleLog(info) {
+	if (SETTINGS.SHOW_NOTIFICATIONS)
 		ui.notifications.info(info);
 	else
 		console.log(`[MACRO] ${MACRO_NAME} ${MACRO_VERSION} | ${info}`);
