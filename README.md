@@ -22,11 +22,13 @@ Creates a comprehensive bestiary of NPC classes and templates for all loaded LCP
 
 ### Changelog
 
-#### TBD
-* Indev version of a Black Thumb macro. It's here for version controlling, but you shouldn't mess with it!
+#### May 16, 2025
+* Indev version of a Black Thumb macro. It's here for version controlling, but you should only mess with it if you're okay with potential world-breaking bugs.
 * **Lancer Bestiary 0.2**
-  * Strider features are now grouped together by kit. This isn't done in a very clean way, but it'll work for now.
-  * Weapon class (i.e. Superheavy Cannon, Main Rifle, etc) is now visible, and is shown in the same section as weapon tags.
+	* Striders now group together their kit features. I'm not super happy with the solution I used, but it'll work for now.
+	* NPC weapon types (i.e. Superheavy Cannon) are displayed alongside their tags.
+	* Minor adjustment to console logging to improve legibility -- now prefixes "[MACRO]" instead of "Macro:".
+	* Updated to use Foundry's new dialog system, since the old one was deprecated.
 
 #### May 9, 2025
 * Initial release.

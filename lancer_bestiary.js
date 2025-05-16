@@ -19,7 +19,11 @@
 	* I drew extensively from the macro work of LostCarcosa and Z3nner (GitHub names) to make this, in some cases with ported code. I stand on your shoulders here; thank you.
 
 	Changelog:
-	* 0.2: Striders now group together their kit features. I'm not super happy with this, but it'll work for now. Also now displays NPC weapon types (i.e. Superheavy Cannon).
+	* 0.2:
+		* Striders now group together their kit features. I'm not super happy with the solution I used, but it'll work for now.
+		* NPC weapon types (i.e. Superheavy Cannon) are displayed alongside their tags.
+		* Minor adjustment to console logging to improve legibility -- now prefixes "[MACRO]" instead of "Macro:".
+		* Updated to use Foundry's new dialog system, since the old one was deprecated.
 	* 0.1: Initial public release. Works with Foundry v12.331, Lancer v2.8.1. Cleanliness refactoring, file formatting, lots of changes from internal version
 */
 
@@ -92,11 +96,16 @@ const MACRO_VERSION = "0.2"
 
 const DUPLICATE_HANDLING = { OVERWRITE: 1, SKIP: 2 } // These are defined in order to avoid using magic strings/numbers
 
-if (await Dialog.confirm({
-	title: `${MACRO_NAME} ${MACRO_VERSION}`,
-	content: '<p>Are you sure you want to regenerate the bestiary? This <b>cannot be interrupted</b> and will take a while.</p>'
-}) != true)
+try {
+	if (await foundry.applications.api.DialogV2.confirm({
+		window: { title: `${MACRO_NAME} ${MACRO_VERSION}` },
+		content: 'Are you sure you want to regenerate the bestiary? This cannot be interrupted and will take a while.'
+	}) != true)
+		return;
+} catch {
+	consoleLog("Confirmation was canceled. Exiting gracefully.")
 	return;
+}
 
 //#region Main logic
 
@@ -213,20 +222,21 @@ try {
 		if (existingEntry) { // We've found a duplicate. Determine how to handle it for this run
 			currentSubActivity = `"${doc.name}, handling duplicate entry"`
 			if (duplicateBehavior === undefined) {
-				await Dialog.wait({
-					title: `${MACRO_NAME} ${MACRO_VERSION}`,
-					content: "<p>Found a duplicate bestiary sheet with the same name (" + entryName + "). Should we skip over entries that already have sheets, or overwrite them? <b>Overwriting will delete the duplicate entries and replace them with new ones.</b></p>",
-					buttons: {
-						one: {
+				await foundry.applications.api.DialogV2.wait({
+					window: { title: `${MACRO_NAME} ${MACRO_VERSION}` },
+					content: "Found a duplicate bestiary sheet with the same name (" + entryName + "). Should we skip over entries that already have sheets, or overwrite them? <b>Overwriting will delete the duplicate entries and replace them with new ones.</b>",
+					buttons: [
+						{
+							action: "skip",
 							label: "Skip",
 							callback: () => duplicateBehavior = DUPLICATE_HANDLING.SKIP
 						},
-						two: {
+						{
+							action: "overwrite",
 							label: "Overwrite",
 							callback: () => duplicateBehavior = DUPLICATE_HANDLING.OVERWRITE
 						}
-					},
-					default: "one"
+					],
 				});
 			}
 			switch (duplicateBehavior) {
@@ -325,7 +335,6 @@ try {
 			}
 			if (optionalFeaturesContent) {
 				fullHtml += `<h3>Optional Features</h3>` + optionalWeaponsContent + optionalFeaturesContent;
-				console.log(optionalKits);
 				for (const [name, features] of Object.entries(optionalKits)) {
 					fullHtml += await encapsulateStriderKit(features, name);
 				}
@@ -584,7 +593,7 @@ function subConstructEntryFeatures(featureList) {
 ////////////////////////
 
 function consoleLog(contents) {
-	console.log(`Macro: ${MACRO_NAME} ${MACRO_VERSION} | ${contents}`)
+	console.log(`[MACRO] ${MACRO_NAME} ${MACRO_VERSION} | ${contents}`)
 }
 
 // Returns a human-readable version of `baseName`, with specifics depending on the provided `mode`.
