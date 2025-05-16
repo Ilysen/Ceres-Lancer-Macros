@@ -27,7 +27,7 @@ Creates a comprehensive bestiary of NPC classes and templates for all loaded LCP
 
 ## [Black Thumb Rodeo All-In-One](black_thumb_rodeo_aio.js)
 
-All-purpose macro for Black Thumb Rodeo, with lots of configuration. Activating the macro will place a pilot token offset from the mech token and visually shrunk down to match, so that it can be targeted in accordance to the rules of the talent. Activating again will cause the token to be deleted, so you don't need to fuss -- you can use the same button multiple times!
+All-purpose implementation of Black Thumb Rodeo, with lots of configuration. Functions by placing down a token for the pilot, then shrinking it down and visually offsetting it next to the mech itself. Activating the macro will do different things depending on the current context -- placing the pilot token if it needs to, re-centering it if it's there but out of position, deleting it if it's already in the correct place (allowing the macro to function as a toggle), and so on. The macro attempts to automatically find the correct sheet by default, but you can also configure it to manually search for a specific sheet as well!
 
 Although this is built for Black Thumb, there's no limitations in place regarding what you use it for. It can also be used for things like Latch Drone; you'll just need to set up the configuration for it.
 
