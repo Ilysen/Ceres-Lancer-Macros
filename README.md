@@ -14,11 +14,15 @@ A list includes:
 
 Creates a comprehensive bestiary of NPC classes and templates for all loaded LCPs, intelligently sorted into subfolders based on role (Artillery, Striker), etc. Compatible with all kinds of third-party content, and includes out-of-the-box support for Kai Tave's NPC rebakes (currently in playtesting).
 
-![Bestiary demo](assets/img/Bestiary_0.PNG)
+<details><summary>Screenshots</summary>
+  ![Bestiary demo](assets/img/Bestiary_0.PNG)
 
-*(Screenshot taken with [Ownership Viewer](https://foundryvtt.com/packages/permission_viewer))*
+  *(Screenshot taken with [Ownership Viewer](https://foundryvtt.com/packages/permission_viewer))*
 
-![Bestiary sidebar view](assets/img/Bestiary_1.PNG)
+  ![Bestiary sidebar view](assets/img/Bestiary_1.PNG)
+
+  ![Bestiary strider demo](assets/img/Bestiary_2.png)
+</details>
 
 ### Changelog
 
