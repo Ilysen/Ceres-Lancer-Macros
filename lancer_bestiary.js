@@ -5,7 +5,7 @@
 	Tested with a module-heavy setup on Foundry version 12.331, Lancer version 2.8.1.
 
 	This macro creates a comprehensive bestiary of all NPC classes and templates, each sorted into per-role folders, with base and optional features each listed.
-	If Kai's NPC Rebakes are installed, they'll be separated into their own folders!
+	If Kai's NPC Rebakes are installed, they'll be separated into their own folders! (see: https://kaitave.itch.io/lancer-npcs-rebaked)
 
 
 	Usage instructions: Just hit the button and confirm. The macro should do everything on its own.
@@ -19,6 +19,10 @@
 	* I drew extensively from the macro work of LostCarcosa and Z3nner (GitHub names) to make this, in some cases with ported code. I stand on your shoulders here; thank you.
 
 	Changelog:
+	* 0.3:
+  		* Tentative support for the Wallflower rebakes:
+			* Striders are preliminary. Their kits are grouped together, but kit bonuse and swap bonuses are currently not included in the kit dropdowns themselves because the LCP handles them in a much different way than the regular Wallflower LCP. I'll work it out down the line if I can.
+			* The new Veteran class-specific optionals are grouped up with the existing Veteran template, rather than having their own entry.
 	* 0.2:
 		* Striders now group together their kit features. I'm not super happy with the solution I used, but it'll work for now.
 		* NPC weapon types (i.e. Superheavy Cannon) are displayed alongside their tags.
@@ -76,7 +80,8 @@ const SETTINGS = {
 	// 1. The RPV template (always capitalized, regardless of `NAME_MODE`)
 	// 2. Grunts from Kai's rebakes (items are considered rebakes if they have `"Grunt "` in their names; note the whitespace the end)
 	// 3. Striders have entirely bespoke code to group their features into kits.
-	// If either of those causes you trouble, set this to false and these special exceptions will be ignored
+	// 4. Templates whose name is included in `veteranTraitCollections` will have their features lumped into the base Veteran rebake template, and not have their own entry.
+	// If any of those causes you trouble, set this to false and these special exceptions will be ignored
 	ENABLE_HACKY_WORKAROUNDS: true
 }
 
@@ -92,7 +97,7 @@ const SETTINGS = {
 
 // Used in debug messaging 
 const MACRO_NAME = "Lancer Bestiary"
-const MACRO_VERSION = "0.2"
+const MACRO_VERSION = "0.3"
 
 const DUPLICATE_HANDLING = { OVERWRITE: 1, SKIP: 2 } // These are defined in order to avoid using magic strings/numbers
 
@@ -118,7 +123,8 @@ try {
 // Warning: Here be dragons. This is about half-refactored from the much messier form it took (originally this was a private macro for personal use).
 // I've done my best to make it palatable, but consider yourself warned!
 
-//#region evil terrible strider kits
+//#region evil terrible workarounds
+
 // I hate this. I HATE this.
 // The Wallflower LCP doesn't individually flag any of these features as associated with their kits. The PDF is the only source.
 // So as a result, if we want to be accurate to the rules, we need to *manually define the feature names as associated with their kits*!!!
@@ -129,6 +135,16 @@ const striderKitFeatures = {
 	"SIEGE": ["SHOULDER MORTAR", "SIEGE KIT SWAP BONUS", "BLAST SHIELD", "ENTRENCHED"],
 	"SAPPER": ["MAG SHOTGUN", "SAPPER KIT SWAP BONUS", "SMOKE GRENADE", "JAMMING PYLON"],
 }
+
+const rebakeStriderKitFeatures = {
+	"Marksman": [ "Ranger Long Rifle", "Flash Grenade", "Adaptive Camouflage" ],
+	"Skirmisher": [ "Explosive Carbine", "Reposition", "Smoke Grenade" ]
+}
+
+// For some reason, the Wallflower rebake LCP handles its additional Veteran optionals by creating an entirely new template with just those optionals.
+// When we parse a template whose name is in this list, we skip it instead, and come back to it later to lump its optionals into the *regular* rebake Veteran instead.
+const veteranTraitCollections = [ "NRFaWF Veteran [K]" ];
+
 //#endregion
 
 // General descriptions of what the macro is doing. Used in error logging
@@ -167,10 +183,12 @@ try {
 
 	stage = "Building entries"
 	for (let doc of docs.filter(x => x.type != "npc_feature")) {
+		if (SETTINGS.ENABLE_HACKY_WORKAROUNDS && veteranTraitCollections.includes(doc.name))
+			continue;
 		currentSubActivity = `"${doc.name}, getting basic data"`
 		let entryName = processText(doc.name, SETTINGS.NAME_MODE);
 		let isTemplate = doc.type === "npc_template";
-		let isStrider = !isTemplate && doc.name === "STRIDER" && SETTINGS.ENABLE_HACKY_WORKAROUNDS; // This adjusts a lot of behavior down the line, so we need to set it early
+		let isStrider = !isTemplate && doc.name.toLowerCase().includes("strider") && SETTINGS.ENABLE_HACKY_WORKAROUNDS; // This adjusts a lot of behavior down the line, so we need to set it early
 
 		currentSubActivity = `"${doc.name}, checking for rebake"`
 		// So, Kai's rebake includes bespoke grunt types.
@@ -265,8 +283,7 @@ try {
 				continue;
 			}
 			if (isStrider) {
-				// If the feature is in a strider kit, don't clump it with the other features -- it'll have its own handling later
-				let kitType = checkKitFeature(feature);
+				let kitType = checkKitFeature(feature, isRebake);
 				if (kitType) {
 					if (!baseKits[kitType])
 						baseKits[kitType] = [];
@@ -289,7 +306,7 @@ try {
 				continue;
 			}
 			if (isStrider) {
-				let kitType = checkKitFeature(feature);
+				let kitType = checkKitFeature(feature, isRebake);
 				if (kitType) {
 					if (!optionalKits[kitType])
 						optionalKits[kitType] = [];
@@ -302,6 +319,18 @@ try {
 			else
 				optionalFeatures.push(feature.system);
 		};
+		if (SETTINGS.ENABLE_HACKY_WORKAROUNDS && isRebake && doc.name.toLowerCase().includes("veteran")) {
+			for (const vetThing of docs.filter(x => x.type === "npc_template" && veteranTraitCollections.includes(x.name))) {
+				for (const y of vetThing.system.optional_features) {
+					let feature = await game.lancer.fromLid(y);
+					if (!feature) {
+						consoleLog("Encountered an issue with feature by the name of " + x + ". Fix me manually?");
+						continue;
+					}
+					optionalFeatures.push(feature.system);
+				}
+			}
+		}
 
 		currentSubActivity = `"${doc.name}, constructing base weapons HTML"`
 		let baseWeaponsContent = subConstructEntryWeapons(baseWeapons);
@@ -669,8 +698,9 @@ async function setupForRebakes() {
 }
 
 // Checks if a given feature can be found within any Strider kit. If it can, returns the name of the parent kit.
-function checkKitFeature(feature) {
-	for (const [key, value] of Object.entries(striderKitFeatures)) {
+function checkKitFeature(feature, rebake = false) {
+	const listToUse = !rebake ? striderKitFeatures : rebakeStriderKitFeatures;
+	for (const [key, value] of Object.entries(listToUse)) {
 		if (value.includes(feature.name)) {
 			return key;
 		}
@@ -696,8 +726,13 @@ async function encapsulateStriderKit(features, kitName) {
 			}
 		}
 	}
-	let newKitName = await processText(kitName + " KIT", SETTINGS.FEATURE_MODE);
-	return `<details><summary><i><b>${newKitName}</b></i></summary><div style="border: 2px solid; padding: 0.25rem 0.5rem 0.5rem 0.4rem"><p style="padding-bottom: 0.4rem"><b>Swap bonus:</b> ${swapBonusText}</p>${data}</div><br/></details>`;
+	let newKitName = await processText(kitName + ` ${kitName.toUpperCase() === kitName ? "KIT" : "Kit"}`, SETTINGS.FEATURE_MODE);
+	let toReturn = `<details><summary><i><b>${newKitName}</b></i></summary><div style="border: 2px solid; padding: 0.25rem 0.5rem 0.5rem 0.4rem">`;
+	if (swapBonusText != "") {
+		toReturn += `<p style="padding-bottom: 0.4rem"><b>Swap bonus:</b> ${swapBonusText}</p>`
+	}
+	toReturn += `${data}</div><br/></details>`
+	return toReturn;
 }
 
 //#endregion
