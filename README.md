@@ -49,7 +49,7 @@ https://github.com/user-attachments/assets/556b9d07-ddd6-4d74-aae2-e336b0aa4c21
 
 #### June 28, 2025
 * **Lancer Bestiary 0.3**
-  * Tentative support for the Wallflower rebakes:
+	* Tentative support for the Wallflower rebakes:
 		* Striders are preliminary. Their kits are grouped together, but kit bonuse and swap bonuses are currently not included in the kit dropdowns themselves because the LCP handles them in a much different way than the regular Wallflower LCP. I'll work it out down the line if I can.
 		* The new Veteran class-specific optionals are grouped up with the existing Veteran template, rather than having their own entry.
 
