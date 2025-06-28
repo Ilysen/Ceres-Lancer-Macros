@@ -21,7 +21,7 @@
 	Changelog:
 	* 0.3:
   		* Tentative support for the Wallflower rebakes:
-			* Striders are preliminary. Their kits are grouped together, but kit bonuse and swap bonuses are currently not included in the kit dropdowns themselves because the LCP handles them in a much different way than the regular Wallflower LCP. I'll work it out down the line if I can.
+			* Striders are preliminary. Their kits are grouped together, but kit bonuses and swap bonuses are currently not included in the kit dropdowns themselves because the LCP handles them in a much different way than the regular Wallflower LCP. I'll work it out down the line if I can.
 			* The new Veteran class-specific optionals are grouped up with the existing Veteran template, rather than having their own entry.
 	* 0.2:
 		* Striders now group together their kit features. I'm not super happy with the solution I used, but it'll work for now.
