@@ -1,5 +1,5 @@
 /*
-	Lancer Bestiary 0.2
+	Lancer Bestiary 0.3.2
 	Written by Ceres (@avawantstheoldusernamesback on Discord)
 
 	Tested with a module-heavy setup on Foundry version 12.331, Lancer version 2.8.1.
@@ -19,6 +19,11 @@
 	* I drew extensively from the macro work of LostCarcosa and Z3nner (GitHub names) to make this, in some cases with ported code. I stand on your shoulders here; thank you.
 
 	Changelog:
+	* 0.3.2:
+		* Hopefully finished the Strider kits for Wallflower rebakes. Kit and swap bonuses are now included in the dropdowns, as you'd expect.
+		* Added a setting to separate rebake grunts into their own folders.
+	* 0.3.1:
+		* Deployables are now grouped into their own folder.
 	* 0.3:
   		* Tentative support for the Wallflower rebakes:
 			* Striders are preliminary. Their kits are grouped together, but kit bonuses and swap bonuses are currently not included in the kit dropdowns themselves because the LCP handles them in a much different way than the regular Wallflower LCP. I'll work it out down the line if I can.
@@ -76,6 +81,10 @@ const SETTINGS = {
 	// This shouldn't cause issues with the core NPCs (it's just off by default for clarity) but it can be turned off if you prefer!
 	REMOVE_REBAKE_PREFIX: false,
 
+	// Groups rebake grunts and deployables into their own subfolders.
+	REBAKE_GRUNT_SUBFOLDER: false,
+	REBAKE_DEPLOYABLE_SUBFOLDER: false,
+
 	// Some content needs hardcoded exceptions in order to be properly sorted and named. These are as follows:
 	// 1. The RPV template (always capitalized, regardless of `NAME_MODE`)
 	// 2. Grunts from Kai's rebakes (items are considered rebakes if they have `"Grunt "` in their names; note the whitespace the end)
@@ -97,7 +106,7 @@ const SETTINGS = {
 
 // Used in debug messaging 
 const MACRO_NAME = "Lancer Bestiary"
-const MACRO_VERSION = "0.3"
+const MACRO_VERSION = "0.3.2"
 
 const DUPLICATE_HANDLING = { OVERWRITE: 1, SKIP: 2 } // These are defined in order to avoid using magic strings/numbers
 
@@ -151,11 +160,11 @@ const veteranTraitCollections = [ "NRFaWF Veteran [K]" ];
 let currentActivity = "Prepping basic data";
 let currentSubActivity = "Stuff";
 
+const pack = game.packs.get("world.npc-items");
+const docs = await pack.getDocuments();
+
 try {
 	ui.notifications.info("Now regenerating the bestiary from class and template compendiums. This will take some time.");
-
-	const pack = game.packs.get("world.npc-items");
-	const docs = await pack.getDocuments();
 
 	let fld = game.folders.getName(SETTINGS.JOURNAL_FOLDER_NAME);
 	if (!fld && SETTINGS.JOURNAL_FOLDER_NAME.length > 0) {
@@ -188,6 +197,8 @@ try {
 		currentSubActivity = `"${doc.name}, getting basic data"`
 		let entryName = processText(doc.name, SETTINGS.NAME_MODE);
 		let isTemplate = doc.type === "npc_template";
+		let isDeployable = doc.system.flavor == "" && doc.system.tactics == "";
+		let isRebakeGrunt = doc.name.toLowerCase().includes("grunt") && !isTemplate;
 		let isStrider = !isTemplate && doc.name.toLowerCase().includes("strider") && SETTINGS.ENABLE_HACKY_WORKAROUNDS; // This adjusts a lot of behavior down the line, so we need to set it early
 
 		currentSubActivity = `"${doc.name}, checking for rebake"`
@@ -227,7 +238,14 @@ try {
 
 		currentSubActivity = `"${doc.name}, checking for folders and existing entries"`
 		// Determine appropriate subfolder. Classes will be sorted according to role (i.e. artillery, striker), while templates have their own
-		let roleFolderName = processText(doc.system.role ? doc.system.role : "TEMPLATE", SETTINGS.NAME_MODE);
+		let roleFolderName = doc.system.role;
+		if (isTemplate)
+			roleFolderName = "TEMPLATE";
+		else if (isDeployable && SETTINGS.REBAKE_DEPLOYABLE_SUBFOLDER)
+			roleFolderName = "DEPLOYABLE";
+		else if (isRebakeGrunt && SETTINGS.REBAKE_GRUNT_SUBFOLDER)
+			roleFolderName = "GRUNT";
+		roleFolderName = processText(roleFolderName, SETTINGS.NAME_MODE);
 		let subfolder = parentFld.children.find(x => x.folder.name === roleFolderName)?.folder;
 		if (!subfolder) {
 			subfolder = await Folder.create({ name: roleFolderName, type: "JournalEntry", folder: parentFld });
@@ -283,6 +301,8 @@ try {
 				continue;
 			}
 			if (isStrider) {
+				if (feature.name.includes("Kit") && !feature.name.includes("Swap"))
+					continue;
 				let kitType = checkKitFeature(feature, isRebake);
 				if (kitType) {
 					if (!baseKits[kitType])
@@ -711,8 +731,12 @@ function checkKitFeature(feature, rebake = false) {
 // This individually calls the functions for weapon and feature HTML, then wraps them all in a nice border for legibility's sake and puts it all under a dropdown.
 // We can then add the dropdown to the regular base/optional feature lists within the bestiary page itself.
 async function encapsulateStriderKit(features, kitName) {
-	let swapBonusText = "";
 	let data = "";
+	let kitObj = docs.find(x => x.name == `${kitName} Kit`); // hack for the rebake LCP
+	let swapBonusText = Array.from(kitObj.system.effect.matchAll(/Swap Bonus<\/strong>: (.*?)<\/p>/gm), x => x[1]);
+	let kitBonusText = Array.from(kitObj.system.effect.matchAll(/Kit Bonus<\/strong>: (.*?)<\/p>/gm), x => x[1]);
+	console.log(swapBonusText);
+	console.log(kitBonusText);
 	for (const feature of features) {
 		if (feature.system.type === "Weapon") {
 			data += `<div style="padding-bottom: 0.5rem"><table>${constructWeaponHTML(feature.system)}</table></div>`
@@ -730,6 +754,9 @@ async function encapsulateStriderKit(features, kitName) {
 	let toReturn = `<details><summary><i><b>${newKitName}</b></i></summary><div style="border: 2px solid; padding: 0.25rem 0.5rem 0.5rem 0.4rem">`;
 	if (swapBonusText != "") {
 		toReturn += `<p style="padding-bottom: 0.4rem"><b>Swap bonus:</b> ${swapBonusText}</p>`
+	}
+	if (kitBonusText != "") {
+		toReturn += `<p style="padding-bottom: 0.4rem"><b>Kit bonus:</b> ${kitBonusText}</p>`
 	}
 	toReturn += `${data}</div><br/></details>`
 	return toReturn;

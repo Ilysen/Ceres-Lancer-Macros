@@ -47,6 +47,11 @@ https://github.com/user-attachments/assets/556b9d07-ddd6-4d74-aae2-e336b0aa4c21
 
 ### Changelog
 
+#### December 5, 2025
+* **Lancer Bestiary 0.3.2**
+	* Added settings, off by default, for rebake deployables and grunts to be separated into their own folders.
+	* Hopefully finished the Strider kits for Wallflower rebakes. Kit and swap bonuses are now included in the dropdowns, as you'd expect.
+
 #### June 28, 2025
 * **Lancer Bestiary 0.3**
 	* Tentative support for the Wallflower rebakes:
