@@ -82,8 +82,8 @@ const SETTINGS = {
 	REMOVE_REBAKE_PREFIX: false,
 
 	// Groups rebake grunts and deployables into their own subfolders.
-	REBAKE_GRUNT_SUBFOLDER: false,
-	REBAKE_DEPLOYABLE_SUBFOLDER: false,
+	REBAKE_GRUNT_SUBFOLDER: true,
+	REBAKE_DEPLOYABLE_SUBFOLDER: true,
 
 	// Some content needs hardcoded exceptions in order to be properly sorted and named. These are as follows:
 	// 1. The RPV template (always capitalized, regardless of `NAME_MODE`)
@@ -198,16 +198,21 @@ try {
 		let entryName = processText(doc.name, SETTINGS.NAME_MODE);
 		let isTemplate = doc.type === "npc_template";
 		let isDeployable = doc.system.flavor == "" && doc.system.tactics == "";
-		let isRebakeGrunt = doc.name.toLowerCase().includes("grunt") && !isTemplate;
-		let isStrider = !isTemplate && doc.name.toLowerCase().includes("strider") && SETTINGS.ENABLE_HACKY_WORKAROUNDS; // This adjusts a lot of behavior down the line, so we need to set it early
-
-		currentSubActivity = `"${doc.name}, checking for rebake"`
+		
+		let isRebakeGrunt = false;
+		let isStrider = false;
 		// So, Kai's rebake includes bespoke grunt types.
 		// Unfortunately, the system doesn't keep track of each entry's source LCP; once it's in the shared compendium, that data is lost
 		// These don't have the standard [k] in their name. So, as a result, we just work around it by manually checking for "Grunt "
 		// You may be asking : what if there's something from another LCP that has Grunt in the name?
 		// Good question!
-		let isRebake = entryName.includes(SETTINGS.REBAKE_PREFIX) || (SETTINGS.ENABLE_HACKY_WORKAROUNDS && entryName.includes("Grunt "));
+		if (SETTINGS.ENABLE_HACKY_WORKAROUNDS) {
+			isRebakeGrunt = SETTINGS.ENABLE_HACKY_WORKAROUNDS && doc.name.toLowerCase().includes("grunt") && !isTemplate;
+			isStrider = !isTemplate && doc.name.toLowerCase().includes("strider") && SETTINGS.ENABLE_HACKY_WORKAROUNDS; // This adjusts a lot of behavior down the line, so we need to set it early
+		}
+
+		currentSubActivity = `"${doc.name}, checking for rebake"`
+		let isRebake = entryName.includes(SETTINGS.REBAKE_PREFIX) || isRebakeGrunt;
 		// Before we move on, make sure that the rebake folder is set up if we needed it
 		if (isRebake && rebakeFld === undefined) {
 			currentSubActivity = `"${doc.name}, building new rebake folder"`
