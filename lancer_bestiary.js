@@ -1,5 +1,5 @@
 /*
-	Lancer Bestiary 0.3.2
+	Lancer Bestiary 0.3.3
 	Written by Ceres (@avawantstheoldusernamesback on Discord)
 
 	Tested with a module-heavy setup on Foundry version 12.331, Lancer version 2.8.1.
@@ -19,6 +19,8 @@
 	* I drew extensively from the macro work of LostCarcosa and Z3nner (GitHub names) to make this, in some cases with ported code. I stand on your shoulders here; thank you.
 
 	Changelog:
+	* 0.3.3:
+		* Fixed the macro stopping prematurely and throwing an error when generating the entry for the vanilla Strider.
 	* 0.3.2:
 		* Hopefully finished the Strider kits for Wallflower rebakes. Kit and swap bonuses are now included in the dropdowns, as you'd expect.
 		* Added a setting to separate rebake grunts into their own folders.
@@ -738,8 +740,12 @@ function checkKitFeature(feature, rebake = false) {
 async function encapsulateStriderKit(features, kitName) {
 	let data = "";
 	let kitObj = docs.find(x => x.name == `${kitName} Kit`); // hack for the rebake LCP
-	let swapBonusText = Array.from(kitObj.system.effect.matchAll(/Swap Bonus<\/strong>: (.*?)<\/p>/gm), x => x[1]);
-	let kitBonusText = Array.from(kitObj.system.effect.matchAll(/Kit Bonus<\/strong>: (.*?)<\/p>/gm), x => x[1]);
+	let swapBonusText = "";
+	let kitBonusText = "";
+	if (kitObj != null) {
+		swapBonusText = Array.from(kitObj.system.effect.matchAll(/Swap Bonus<\/strong>: (.*?)<\/p>/gm), x => x[1]);
+		kitBonusText = Array.from(kitObj.system.effect.matchAll(/Kit Bonus<\/strong>: (.*?)<\/p>/gm), x => x[1]);
+	}
 	console.log(swapBonusText);
 	console.log(kitBonusText);
 	for (const feature of features) {

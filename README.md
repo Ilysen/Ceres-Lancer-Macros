@@ -47,6 +47,10 @@ https://github.com/user-attachments/assets/556b9d07-ddd6-4d74-aae2-e336b0aa4c21
 
 ### Changelog
 
+#### December 19, 2025
+* **Lancer Bestiary 0.3.3**
+	* Fixed the macro stopping prematurely and throwing an error when generating the entry for the vanilla Strider.
+
 #### December 5, 2025
 * **Lancer Bestiary 0.3.2**
 	* Added settings, off by default, for rebake deployables and grunts to be separated into their own folders.
