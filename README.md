@@ -47,6 +47,11 @@ https://github.com/user-attachments/assets/556b9d07-ddd6-4d74-aae2-e336b0aa4c21
 
 ### Changelog
 
+#### April 5, 2026
+* **Lancer Bestiary 0.3.4**
+	* Implemented a workaround for images not appearing for squads, monstrosities, and humans.
+	* Minor internal fixes.
+
 #### December 19, 2025
 * **Lancer Bestiary 0.3.3**
 	* Fixed the macro stopping prematurely and throwing an error when generating the entry for the vanilla Strider.

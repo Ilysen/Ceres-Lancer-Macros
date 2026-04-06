@@ -1,5 +1,5 @@
 /*
-	Lancer Bestiary 0.3.3
+	Lancer Bestiary 0.3.4
 	Written by Ceres (@avawantstheoldusernamesback on Discord)
 
 	Tested with a module-heavy setup on Foundry version 12.331, Lancer version 2.8.1.
@@ -19,6 +19,9 @@
 	* I drew extensively from the macro work of LostCarcosa and Z3nner (GitHub names) to make this, in some cases with ported code. I stand on your shoulders here; thank you.
 
 	Changelog:
+	* 0.3.4:
+		* Implemented a workaround for images not appearing for squads, monstrosities, and humans.
+		* Minor internal fixes.
 	* 0.3.3:
 		* Fixed the macro stopping prematurely and throwing an error when generating the entry for the vanilla Strider.
 	* 0.3.2:
@@ -108,7 +111,7 @@ const SETTINGS = {
 
 // Used in debug messaging 
 const MACRO_NAME = "Lancer Bestiary"
-const MACRO_VERSION = "0.3.2"
+const MACRO_VERSION = "0.3.4"
 
 const DUPLICATE_HANDLING = { OVERWRITE: 1, SKIP: 2 } // These are defined in order to avoid using magic strings/numbers
 
@@ -233,13 +236,13 @@ try {
 
 		// Begin constructing our data
 		totalProgress++;
-		updateProgressBar(`Generating entry ${entryName}... (${totalProgress}/${totalEntries})`, totalProgress, totalEntries);
+		updateProgressBar(`Generating entry ${entryName}… (${totalProgress}/${totalEntries})`, totalProgress, totalEntries);
 		if (!isTemplate) {
-			consoleLog("Creating a sheet for NPC class named " + entryName + "... (" + totalNewClasses + "/" + totalClasses + ")");
+			consoleLog("Creating a sheet for NPC class named " + entryName + "… (" + totalProgress + "/" + totalEntries + ")");
 			infoContent = doc.system.tactics;
 			fullHtml = await assembleClassData(doc.system);
 		} else {
-			consoleLog("Creating a sheet for NPC template named " + entryName + "... (" + totalNewTemplates + "/" + totalTemplates + ")");
+			consoleLog("Creating a sheet for NPC template named " + entryName + "… (" + totalProgress + "/" + totalEntries + ")");
 			infoContent = doc.system.description.replace("<br>", "<br><br>");
 		}
 
@@ -446,10 +449,33 @@ async function assembleClassData(classItem) {
 // Returns HTML for the provided class item including an image and its HASE data.
 async function subConstructHaseTable(classItem) {
 	// Fetch an appropriate Retrograde icon if possible by referencing the class's name, removing rebake suffix if needed
-	let imgPath = `systems/lancer/assets/retrograde-minis/Retrograde-Minis-Corpro-${classItem.parent.name.toUpperCase()}.png`.replace(` ${SETTINGS.REBAKE_PREFIX.toUpperCase()}`, "");
+	let className = classItem.parent.name.toUpperCase();
+	let imgPath = `systems/lancer/assets/retrograde-minis/Retrograde-Minis-Corpro-${className}.png`.replace(` ${SETTINGS.REBAKE_PREFIX.toUpperCase()}`, "");
 	if (!await srcExists(imgPath)) {
-		console.error(`Found no image file for ${classItem.parent.name}; this message is harmless`);
-		imgPath = "systems/lancer/assets/icons/npc_class.svg";
+		if (SETTINGS.ENABLE_HACKY_WORKAROUNDS) {
+			consoleLog(`Attempting to use workaround path for class ${className}…`);
+			switch (className) {
+				case "HUMAN":
+					imgPath = imgPath.replace("Corpro", "Misc");
+					consoleLog(`…succeeded. Continuing.`);
+					break;
+				case "SQUAD":
+					imgPath = imgPath.replace("Corpro-SQUAD", "Misc-INFANTRY");
+					consoleLog(`…succeeded. Continuing.`);
+					break;
+				case "MONSTROSITY":
+					imgPath = imgPath.replace("Corpro-MONSTROSITY", "Kaiju-RUGAM");
+					consoleLog(`…succeeded. Continuing.`);
+					break;
+				default:
+					console.error(`Found no image file for ${classItem.parent.name}; this message is harmless`);
+					imgPath = "systems/lancer/assets/icons/npc_class.svg";
+					break;
+			}
+		} else {
+			console.error(`Found no image file for ${classItem.parent.name}; this message is harmless`);
+			imgPath = "systems/lancer/assets/icons/npc_class.svg";
+		}
 	}
 	let content = ``;
 	// On the left-hand side, add an image...
