@@ -1,5 +1,5 @@
 /*
-	Lancer Bestiary 0.3.4
+	Lancer Bestiary 0.3.5
 	Written by Ceres (@avawantstheoldusernamesback on Discord)
 
 	Tested with a module-heavy setup on Foundry version 12.331, Lancer version 2.8.1.
@@ -19,6 +19,8 @@
 	* I drew extensively from the macro work of LostCarcosa and Z3nner (GitHub names) to make this, in some cases with ported code. I stand on your shoulders here; thank you.
 
 	Changelog:
+	* 0.3.5:
+		* Quick fix for system version 3.0.0.
 	* 0.3.4:
 		* Implemented a workaround for images not appearing for squads, monstrosities, and humans.
 		* Minor internal fixes.
@@ -111,7 +113,7 @@ const SETTINGS = {
 
 // Used in debug messaging 
 const MACRO_NAME = "Lancer Bestiary"
-const MACRO_VERSION = "0.3.4"
+const MACRO_VERSION = "0.3.5"
 
 const DUPLICATE_HANDLING = { OVERWRITE: 1, SKIP: 2 } // These are defined in order to avoid using magic strings/numbers
 
@@ -442,7 +444,7 @@ catch (error) {
 
 // Sets up a baseline set of data for the provided class.
 async function assembleClassData(classItem) {
-	let content = await subConstructHaseTable(classItem) + subConstructStatTable(classItem) + `</div><div style="color: #000000; width: 100%; float: right; text-align: left;">`;
+	let content = await subConstructHaseTable(classItem) + subConstructStatTable(classItem) + `</div><div style="width: 100%; float: right; text-align: left;">`;
 	return content;
 }
 
@@ -479,9 +481,9 @@ async function subConstructHaseTable(classItem) {
 	}
 	let content = ``;
 	// On the left-hand side, add an image...
-	content += `<p><img style="border: 3px dashed #000000; float: left; margin-right: 5px; margin-left: 5px;" src="${imgPath}" width="30%" height="30%" /></p>`;
+	content += `<p><img style="border: 3px dashed; float: left; margin-right: 5px; margin-left: 5px;" src="${imgPath}" width="30%" height="30%" /></p>`;
 	// ...start a div with aligned text, to be closed later down the line...
-	content += `<div style="color: #000000; width: 65%; float: right; text-align: left;">`
+	content += `<div style="width: 65%; float: right; text-align: left;">`
 	// ...and finally add the HASE table to the right
 	content +=
 		`

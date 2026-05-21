@@ -47,6 +47,10 @@ https://github.com/user-attachments/assets/556b9d07-ddd6-4d74-aae2-e336b0aa4c21
 
 ### Changelog
 
+#### May 21, 2026
+* **Lancer Bestiary 0.3.5**
+	* Quick fix for system version 3.0.0.
+
 #### April 5, 2026
 * **Lancer Bestiary 0.3.4**
 	* Implemented a workaround for images not appearing for squads, monstrosities, and humans.
